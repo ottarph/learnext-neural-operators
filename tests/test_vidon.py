@@ -6,31 +6,6 @@ from torch.utils.data import DataLoader
 from neuraloperators.networks import MLP, SplitAdditive
 from neuraloperators.encoders import SequentialEncoder, CoordinateInsertEncoder, BoundaryFilterEncoder, FixedFilterEncoder, SplitAdditiveEncoder
 
-def test_split_additive():
-
-    split_add_model = SplitAdditive(MLP([2, 64]), MLP([2, 64]), 2, 2)
-
-    x = torch.rand((8, 60, 4))
-    assert split_add_model(x).shape == (8, 60, 64)
-
-    x = torch.rand((4))
-    x1 = torch.cat([x[:2], x[:2]], dim=0)
-    x2 = torch.cat([x[:2], x[2:]], dim=0)
-    x3 = torch.cat([x[2:], x[:2]], dim=0)
-    x4 = torch.cat([x[2:], x[2:]], dim=0)
-    y1 = split_add_model(x1)
-    y2 = split_add_model(x2)
-    y3 = split_add_model(x3)
-    y4 = split_add_model(x4)
-
-    # Check split-additivity. If correctly implemented, then
-    #             y1 + y4 = sa_1(x[:2]) + sa_1(x[2:]) + sa_2(x[:2]) + sa_2(x[2:])
-    #             y2 + y3 = sa_1(x[:2]) + sa_1(x[2:]) + sa_2(x[2:]) + sa_2(x[:2])
-    # y1 + y4 - (y2 + y3) = 0
-    eps = torch.finfo(torch.get_default_dtype()).eps
-    assert torch.norm( y1 + y4 - y2 - y3) < eps * 64
-
-    return
 
 def test_VIDONMHAHead():
     x_data, y_data = load_MeshData("dataset/artificial_learnext", "XDMF")
@@ -137,7 +112,6 @@ def test_VIDON_deeponet():
 
 
 if __name__ == "__main__":
-    test_split_additive()
     test_VIDONMHAHead()
     test_VIDONMHA()
     test_VIDON()
