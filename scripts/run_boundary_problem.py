@@ -21,6 +21,44 @@ def run_boundary_problem(problem_file: Path, results_dir: Path,
     x_data: MeshData = dset.x_data
     y_data: MeshData = dset.y_data
 
+    from neuraloperators.deepsets import DeepSets
+    from neuraloperators.networks import ResidualMLP, MLP
+    # if isinstance(deeponet.branch, DeepSets) and isinstance(deeponet.branch.representer, MLP):
+    #     widths, activation = deeponet.branch.representer.widths, deeponet.branch.representer.activation
+    #     deeponet.branch.representer = ResidualMLP(widths, activation)
+    # if isinstance(deeponet.branch, DeepSets) and isinstance(deeponet.branch.processor, MLP):
+    #     widths, activation = deeponet.branch.processor.widths, deeponet.branch.processor.activation
+    #     deeponet.branch.processor = ResidualMLP(widths, activation)
+    # if isinstance(deeponet.trunk, MLP):
+    #     widths, activation = deeponet.trunk.widths, deeponet.trunk.activation
+    #     deeponet.trunk = ResidualMLP(widths, activation)
+
+    # deeponet.branch.representer = nn.Sequential(
+    #     MLP([4, 128]),
+    #     ResidualMLP(128, 4, nn.ReLU(), nn.LayerNorm((128,)))
+    # )
+    # deeponet.branch.processor = MLP([128, 128, 32])
+    print(deeponet)
+
+    print(sum(map(lambda p: p.numel(), deeponet.branch.parameters())))
+    deeponet.branch = nn.Sequential(
+        MLP([412, 256]),
+        ResidualMLP(256, 4),# normalization=nn.BatchNorm1d((256,))),
+        MLP([256, 32])
+    )
+    print(sum(map(lambda p: p.numel(), deeponet.branch.parameters())))
+    # quit()
+
+    print(sum(map(lambda p: p.numel(), deeponet.trunk.parameters())))
+    deeponet.trunk = nn.Sequential(
+        MLP([2, 256]),
+        ResidualMLP(256, 3),# normalization=nn.LayerNorm((256,))),
+        MLP([256, 32])
+    )
+    print(sum(map(lambda p: p.numel(), deeponet.trunk.parameters())))
+    print(deeponet)
+    # quit()
+
     evaluation_points = y_data.dof_coordinates[None,...].to(dtype=torch.get_default_dtype())
 
     from neuraloperators.cost_functions import DataInformedLoss
@@ -57,7 +95,7 @@ def run_boundary_problem(problem_file: Path, results_dir: Path,
     
     net = EvalWrapper(deeponet, evaluation_points, mask_tensor)
     net.to(device)
-
+    print(net)
     context = Context(net, loss_fn, optimizer, scheduler)
 
     try:
@@ -99,10 +137,10 @@ def run_boundary_problem(problem_file: Path, results_dir: Path,
 def main():
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--problem-file", default=Path("problems/default.json"), type=Path)
-    # parser.add_argument("--results-dir", default=Path("results/default"), type=Path)
-    parser.add_argument("--problem-file", default=Path("problems/defaultdeepsets.json"), type=Path)
-    parser.add_argument("--results-dir", default=Path("results/defaultdeepsets"), type=Path)
+    parser.add_argument("--problem-file", default=Path("problems/default.json"), type=Path)
+    parser.add_argument("--results-dir", default=Path("results/default_skiptest"), type=Path)
+    # parser.add_argument("--problem-file", default=Path("problems/defaultdeepsets.json"), type=Path)
+    # parser.add_argument("--results-dir", default=Path("results/defaultdeepsets_skiptest"), type=Path)
     # parser.add_argument("--problem-file", default=Path("problems/defaultvidon.json"), type=Path)
     # parser.add_argument("--results-dir", default=Path("results/defaultvidon"), type=Path)
     parser.add_argument("--save-xdmf", default=True, action=argparse.BooleanOptionalAction)

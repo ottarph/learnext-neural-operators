@@ -3,16 +3,6 @@ import torch.nn as nn
 
 from neuraloperators.networks import *
 
-
-# def test_residual_mlp():
-
-#     res_mlp = ResidualMLP(2, 4, 3, 5)
-#     print(res_mlp)
-
-#     z = res_mlp(torch.rand(2))
-
-#     return
-
 def test_skip_connection():
 
     mod = MLP([4, 4, 4])
@@ -29,9 +19,60 @@ def test_skip_connection():
     print(skip)
 
 
-    fully_skip = nn.Sequential(nn.Sequential())
+    fully_skip = nn.Sequential(nn.Sequential(nn.Linear(4,4), nn.ReLU()),
+                               nn.Sequential(nn.Linear(4,4), nn.ReLU()),
+                               nn.Sequential(nn.Linear(4,4), nn.ReLU()),
+                               nn.Linear(4,4))
+    
+    print(fully_skip)
+    print(fully_skip(torch.rand(4)))
 
     return
+
+def test_residual_mlp_block():
+
+    block = ResidualMLPBlock(4, normalization=nn.LayerNorm((4,)))
+    print(block)
+
+    print(block(torch.rand((2,4))))
+
+    norm = nn.LayerNorm((20, 2))
+    print(norm(torch.rand((20, 2))))
+
+    x0 = torch.rand(2)
+    x = torch.cat([x0[None,...]*0.05*i for i in range(1,21)], dim=0)
+    print(x)
+    print(norm(x) - norm.bias)
+    print(norm.bias)
+    print(norm.weight)
+
+    norm = nn.LayerNorm((2,))
+    print(norm(torch.rand((2,))))
+
+    x0 = torch.rand(2)
+    x = torch.cat([x0[None,...]*0.05*i for i in range(1,21)], dim=0)
+    print(x)
+    print(norm(x) - norm.bias)
+    print(norm.bias)
+    print(norm.weight)
+
+
+    return
+
+def test_residual_mlp():
+    
+    prepro  = MLP([4, 128])
+    resnet  = ResidualMLP(128, 4, nn.ReLU(), nn.LayerNorm((128,)))
+    postpro = MLP([128, 6])
+
+    model = nn.Sequential(prepro, resnet, postpro)
+    
+    print(model)
+
+    print(model(torch.rand((2, 10, 4))))
+
+    return
+
 
 def test_split_additive():
 
@@ -61,6 +102,7 @@ def test_split_additive():
 
 
 if __name__ == "__main__":
-    # test_residual_mlp()
     test_skip_connection()
+    test_residual_mlp_block()
+    test_residual_mlp()
     test_split_additive()
