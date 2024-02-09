@@ -54,7 +54,7 @@ def load_boundary_indices(dataset_path: PathLike, tag: int = INTERFACE_TAG) -> n
     bc = df.DirichletBC(V, df.Constant(1.0), facet_f, tag)
     bc.apply(u.vector())
 
-    inds = np.nonzero(u.vector()[:])
+    inds = np.flatnonzero(u.vector()[:])
 
     return inds
 

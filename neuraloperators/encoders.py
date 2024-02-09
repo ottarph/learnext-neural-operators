@@ -5,7 +5,9 @@ import numpy as np
 from os import PathLike
 from pathlib import Path
 
-from dataset.dataset import MeshData
+# from dataset.dataset import MeshData
+from typing import NewType, Any
+MeshData = NewType("MeshData", Any)
 
 
 class Encoder(nn.Module):
