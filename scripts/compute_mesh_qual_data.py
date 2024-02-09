@@ -78,3 +78,13 @@ if __name__ == "__main__":
     fig.subplots_adjust(**sp_adj_kws)
 
     fig.savefig(data_path.with_name("mesh_quality_short.pdf"))
+
+    figsize = (6,3)
+    sp_adj_kws = {"left": 0.095, "top": 0.99, "right": 0.99, "bottom": 0.145}
+    # sp_adj_kws = {}
+    fig, ax = make_single_mesh_quality_plot(min_mq_arr, figsize=figsize)
+    fig.subplots_adjust(**sp_adj_kws)
+    ax.set_xlabel(ax.get_xlabel(), fontsize=12)
+    ax.set_ylabel(ax.get_ylabel(), fontsize=12)
+
+    fig.savefig(data_path.with_name("mesh_quality_squat.pdf"))
