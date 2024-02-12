@@ -41,7 +41,6 @@ def main():
     torch.manual_seed(seed=0)
 
     from neuraloperators.encoders import IdentityEncoder as Id
-    # Id = nn.Identity
     from neuraloperators.deeponet import DeepONet
     from neuraloperators.networks import MLP
 
@@ -107,6 +106,8 @@ def main():
 
     fig, ax = plt.subplots()
     ax.semilogy(range(epochs), losses, 'k-')
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("loss")
     fig.savefig("subdomain/output/loss.pdf")
     
 
@@ -150,6 +151,8 @@ def main():
     ax.plot(range(min_mesh_mq.shape[0]), bhmin_mesh_mq, 'k:', label="biharmonic")
     ax.set_xlim(xmin=0, xmax=min_mesh_mq.shape[0])
     ax.set_ylim(ymin=0.0, ymax=0.75)
+    ax.set_xlabel("dataset index ($k$)")
+    ax.set_ylabel("min. scaled Jacobian mesh quality")
     ax.legend(loc="lower left")
     fig.savefig("subdomain/output/meshquality.pdf")
 
@@ -167,6 +170,23 @@ def main():
         outfile.write(msh)
         outfile.write_checkpoint(mask_df, "lh", 0, append=True)
 
+
+    trunk_basis_input = torch.tensor(df.FunctionSpace(msh, "CG", order).tabulate_dof_coordinates(), dtype=torch.float32, device=device)
+    trunk_basis = trunk(trunk_basis_input).detach().cpu().numpy() * mask_df.vector()[:].reshape(-1,1)
+    t = df.Function(df.FunctionSpace(msh, "CG", order))
+    with df.XDMFFile("subdomain/output/trunk_basis.xdmf") as outfile:
+        outfile.write(msh)
+        for p in range(trunk_basis.shape[1]):
+            th_p = trunk_basis[:,p]
+            t.vector().set_local(th_p)
+            outfile.write_checkpoint(t, "th", p, append=True)
+
+
+    deeponet.to(torch.device("cpu"))
+    torch.save(branch.state_dict(), "subdomain/output/branch.pt")
+    torch.save(trunk.state_dict(), "subdomain/output/trunk.pt")
+
+    Path("subdomain/output/deeponet.txt").write_text(str(deeponet))
 
     return
 
